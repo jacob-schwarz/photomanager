@@ -62,10 +62,10 @@ fn insert_photo(photo: &Photo, connection: &Connection) -> Result<usize> {
     )
 }
 
-fn create_index() -> Result<()> {
+fn create_index(path: String) -> Result<()> {
 
     let connection: Connection = setup_db()?;
-    let photos = match get_photos_in_path(Path::new("sample_photos")) {
+    let photos = match get_photos_in_path(Path::new(&path)) {
         Ok(res) => res,
         Err(_) => Vec::new(),
     };
@@ -109,11 +109,16 @@ fn main() -> Result<()> {
         .subcommand(
             Command::new("index")
                 .about("Looks for photos and catalogs them")
+                .arg(arg!(<PATH> "Path to directory with photos"))
+                .arg_required_else_help(true)
             )
         .get_matches();
 
     match matches.subcommand() {
-        Some(("index", sub_matches)) => {create_index();},
+        Some(("index", sub_matches)) => {
+            let path = sub_matches.get_one::<String>("PATH").expect("required");            
+            create_index(path.to_string())?;
+        },
         _ => unreachable!("The command is valid but not available!"),
     }
 
