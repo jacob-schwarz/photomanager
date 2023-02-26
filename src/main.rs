@@ -105,7 +105,6 @@ fn main() -> Result<()> {
     let matches = command!()
         .propagate_version(true)
         .subcommand_required(true)
-        .arg_required_else_help(true)
         .subcommand(
             Command::new("index")
                 .about("Looks for photos and catalogs them")
