@@ -3,6 +3,7 @@ use rusqlite::{Connection, Result};
 use log::{error, info, debug};
 use simple_logger::SimpleLogger;
 use sha256::try_digest;
+use clap::{arg, command, Command};
 
 #[derive(Debug)]
 struct Photo {
@@ -61,9 +62,7 @@ fn insert_photo(photo: &Photo, connection: &Connection) -> Result<usize> {
     )
 }
 
-fn main() -> Result<()> {
-    
-    SimpleLogger::new().init().unwrap();
+fn create_index() -> Result<()> {
 
     let connection: Connection = setup_db()?;
     let photos = match get_photos_in_path(Path::new("sample_photos")) {
@@ -93,6 +92,29 @@ fn main() -> Result<()> {
 
     for photo in photo_iter {
         info!("{:?}", photo.unwrap());
+    }
+
+    Ok(())
+}
+
+fn main() -> Result<()> {
+    
+    SimpleLogger::new().init().unwrap();
+
+
+    let matches = command!()
+        .propagate_version(true)
+        .subcommand_required(true)
+        .arg_required_else_help(true)
+        .subcommand(
+            Command::new("index")
+                .about("Looks for photos and catalogs them")
+            )
+        .get_matches();
+
+    match matches.subcommand() {
+        Some(("index", sub_matches)) => {create_index();},
+        _ => unreachable!("The command is valid but not available!"),
     }
 
     Ok(())
