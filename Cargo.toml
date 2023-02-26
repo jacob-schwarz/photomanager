@@ -8,8 +8,11 @@ description = "Creates a libary for photos in order to manage them without overh
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.69"
+async-recursion = "1.0.2"
 clap = { version = "4.1.6", features = ["derive", "cargo"] }
 log = "0.4.17"
-rusqlite = "0.28.0"
 sha256 = "1.1.2"
 simple_logger = "4.0.0"
+sqlx = { version = "0.6.2", features = ["runtime-tokio-native-tls", "sqlite"] }
+tokio = { version = "1.25.0", features = ["full"] }
