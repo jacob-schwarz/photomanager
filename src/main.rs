@@ -2,7 +2,6 @@ use std::path::Path;
 use log::{error, info, debug};
 use simple_logger::SimpleLogger;
 use sha256::try_digest;
-use clap::{arg, command, Command};
 use sqlx::SqliteExecutor;
 use sqlx::sqlite::SqlitePool;
 use async_recursion::async_recursion;
@@ -80,6 +79,50 @@ async fn list_index(pool: &SqlitePool) -> anyhow::Result<()> {
     Ok(())
 }
 
+mod cli {
+    use clap::{arg, command, Command};
+    use sqlx::sqlite::SqlitePool;
+    
+    pub async fn init(pool: &SqlitePool) -> anyhow::Result<()> {
+
+        let matches = command!()
+            .propagate_version(true)
+            .subcommand_required(true)
+            .subcommand(
+                Command::new("index")
+                    .about("Manage the photo catalog")
+                    .subcommand(
+                        Command::new("create")
+                        .about("Scan a directory recursively and create the catalog")
+                        .arg(arg!(<PATH> "Path to directory with photos"))
+                        .arg_required_else_help(true)
+                    )
+                    .subcommand(
+                        Command::new("list")
+                        .about("List all photos of the catalog")
+                    )
+                )
+            .get_matches();
+
+        match matches.subcommand() {
+            Some(("index", index)) => {
+                match index.subcommand() {
+                    Some(("create", create)) => {
+                        let path = create.get_one::<String>("PATH").expect("required");            
+                        super::create_index(path.to_string(), pool).await?;
+                    },
+                    Some(("list", _)) => {
+                        super::list_index(pool).await?;
+                    },
+                    _ => (),
+                }
+            },
+            _ => (),
+        };
+        Ok(())
+    }
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     
@@ -87,40 +130,7 @@ async fn main() -> anyhow::Result<()> {
 
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
 
-    let matches = command!()
-        .propagate_version(true)
-        .subcommand_required(true)
-        .subcommand(
-            Command::new("index")
-                .about("Manage the photo catalog")
-                .subcommand(
-                    Command::new("create")
-                    .about("Scan a directory recursively and create the catalog")
-                    .arg(arg!(<PATH> "Path to directory with photos"))
-                    .arg_required_else_help(true)
-                )
-                .subcommand(
-                    Command::new("list")
-                    .about("List all photos of the catalog")
-                )
-            )
-        .get_matches();
-
-    match matches.subcommand() {
-        Some(("index", index)) => {
-            match index.subcommand() {
-                Some(("create", create)) => {
-                    let path = create.get_one::<String>("PATH").expect("required");            
-                    create_index(path.to_string(), &pool).await?;
-                },
-                Some(("list", _)) => {
-                    list_index(&pool).await?;
-                },
-                _ => (),
-            }
-        },
-        _ => (),
-    }
+    cli::init(&pool).await?;
 
     Ok(())
 }
