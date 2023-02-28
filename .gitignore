@@ -1,3 +1,4 @@
 /target
 /sample_photos
 .DS_Store
+*.db
