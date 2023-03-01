@@ -12,7 +12,7 @@ async fn main() -> anyhow::Result<()> {
     
     SimpleLogger::new().init().unwrap();
 
-    let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
+    let pool = SqlitePool::connect(env!("DATABASE_URL")).await?;
 
     cli::init(&pool).await?;
 
