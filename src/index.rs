@@ -41,27 +41,20 @@ async fn get_photos_in_path(path: &Path) -> Vec<Photo> {
     debug!("Getting photos in path: {:?}", path);
 
     if let Ok(entries) = std::fs::read_dir(path) {
-        for entry in entries {
-
-            if let Ok(entry) = entry {
-                let i_path = entry.path();
-
-                if i_path.is_file() {
-                    photos.push(Photo::new (                       
-                        0,
-                        i_path.to_string_lossy().to_string(),
-                        try_digest(entry.path().as_path()).unwrap()
-                    ));
-                } else if i_path.is_dir() {
-                    let sub_dir_photos = get_photos_in_path(i_path.as_path()).await;
-                    photos.extend(sub_dir_photos);
-                }
+        for entry in entries.flatten() {
+            let i_path = entry.path();
+            if i_path.is_file() {
+                photos.push(Photo::new (                       
+                    0,
+                    i_path.to_string_lossy().to_string(),
+                    try_digest(entry.path().as_path()).unwrap()
+                ));
+            } else if i_path.is_dir() {
+                let sub_dir_photos = get_photos_in_path(i_path.as_path()).await;
+                photos.extend(sub_dir_photos);
             }
-
         }
     }
-
-    debug!("Found photos in path {:?}: {:?}", path, photos);
 
     photos
 }
