@@ -9,6 +9,7 @@ pub async fn init(pool: &SqlitePool) -> anyhow::Result<()> {
         .subcommand(
             Command::new("index")
                 .about("Manage the photo catalog")
+                .arg_required_else_help(true)
                 .subcommand(
                     Command::new("create")
                     .about("Scan a directory recursively and create the catalog")
@@ -22,20 +23,17 @@ pub async fn init(pool: &SqlitePool) -> anyhow::Result<()> {
             )
         .get_matches();
 
-    match matches.subcommand() {
-        Some(("index", index)) => {
-            match index.subcommand() {
-                Some(("create", create)) => {
-                    let path = create.get_one::<String>("PATH").expect("required");            
-                    super::index::create_index(path.to_string(), pool).await?;
-                },
-                Some(("list", _)) => {
-                    super::index::list_index(pool).await?;
-                },
-                _ => (),
-            }
-        },
-        _ => (),
+    if let Some(("index", index)) = matches.subcommand() {
+        match index.subcommand() {
+            Some(("create", create)) => {
+                let path = create.get_one::<String>("PATH").expect("required");            
+                super::index::create_index(path.to_string(), pool).await?;
+            },
+            Some(("list", _)) => {
+                super::index::list_index(pool).await?;
+            },
+            _ => (),
+        }
     };
 
     Ok(())
