@@ -6,7 +6,6 @@ use simple_logger::SimpleLogger;
 use sqlx::sqlite::SqlitePool;
 use std::env;
 
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     

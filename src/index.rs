@@ -4,34 +4,50 @@ use sqlx::sqlite::SqlitePool;
 use sha256::try_digest;
 use crate::model::Photo;
 
-pub async fn list_index(pool: &SqlitePool) -> anyhow::Result<()> {
-
-    let records = sqlx::query!("SELECT id, path, hash FROM photos").fetch_all(pool).await?;
-
-    for record in records {
-        println!("{:?}", Photo::new (
-            record.id,
-            record.path,
-            record.hash,
-        ));
-    };
-
-    Ok(())
+pub struct Index<'a> {
+    pool: &'a SqlitePool,
 }
 
-pub async fn create_index(path: String, pool: &SqlitePool) -> anyhow::Result<()> {
-
-    let photos = get_photos_in_path(Path::new(&path));
-
-    println!("{:?}", photos);
-
-    for photo in photos {
-        insert_photo(&photo, pool).await?;
+impl Index<'_> {
+    pub fn init(pool: &SqlitePool) -> Index {
+        Index {
+            pool
+        }
     }
 
-    Ok(())
-}
+    pub async fn list_index(self: &Self) -> anyhow::Result<Vec<Photo>> {
 
+        let records = sqlx::query!("SELECT id, path, hash FROM photos").fetch_all(self.pool).await?;
+        
+        let mut photos = Vec::new();
+        for record in records {
+            let photo = Photo::new (
+                record.id,
+                record.path,
+                record.hash,
+            );
+
+            debug!("Adding photo to result set: {:?}", photo);
+
+            photos.push(photo);
+        };
+
+        Ok(photos)
+    }
+
+    pub async fn create_index(self: &Self, path: String) -> anyhow::Result<()> {
+
+        let photos = get_photos_in_path(Path::new(&path));
+
+        println!("{:?}", photos);
+
+        for photo in photos {
+            insert_photo(&photo, self.pool).await?;
+        }
+
+        Ok(())
+    }
+}
 
 fn get_photos_in_path(path: &Path) -> Vec<Photo> {
     let mut photos: Vec<Photo> = Vec::new();
