@@ -9,7 +9,6 @@ description = "Creates a libary for photos in order to manage them without overh
 
 [dependencies]
 anyhow = "1.0.69"
-async-recursion = "1.0.2"
 clap = { version = "4.1.6", features = ["derive", "cargo"] }
 log = "0.4.17"
 sha256 = "1.1.2"

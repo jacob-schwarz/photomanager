@@ -1,5 +1,4 @@
 use std::path::Path;
-use async_recursion::async_recursion;
 use log::debug;
 use sqlx::sqlite::SqlitePool;
 use sha256::try_digest;
@@ -22,7 +21,7 @@ pub async fn list_index(pool: &SqlitePool) -> anyhow::Result<()> {
 
 pub async fn create_index(path: String, pool: &SqlitePool) -> anyhow::Result<()> {
 
-    let photos = get_photos_in_path(Path::new(&path)).await;
+    let photos = get_photos_in_path(Path::new(&path));
 
     println!("{:?}", photos);
 
@@ -34,8 +33,7 @@ pub async fn create_index(path: String, pool: &SqlitePool) -> anyhow::Result<()>
 }
 
 
-#[async_recursion]
-async fn get_photos_in_path(path: &Path) -> Vec<Photo> {
+fn get_photos_in_path(path: &Path) -> Vec<Photo> {
     let mut photos: Vec<Photo> = Vec::new();
 
     debug!("Getting photos in path: {:?}", path);
@@ -50,7 +48,7 @@ async fn get_photos_in_path(path: &Path) -> Vec<Photo> {
                     try_digest(entry.path().as_path()).unwrap()
                 ));
             } else if i_path.is_dir() {
-                let sub_dir_photos = get_photos_in_path(i_path.as_path()).await;
+                let sub_dir_photos = get_photos_in_path(i_path.as_path());
                 photos.extend(sub_dir_photos);
             }
         }
